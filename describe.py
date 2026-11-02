@@ -1,11 +1,5 @@
-from email import header
-from os import stat
 import sys
-import csv
-
-# sys.argv[0] #le nom de script
-# sys.argv[1] #le premier argument
-# sys.exit(1) #exit the script with an error code
+from utils import load_csv, to_columns, ft_count, ft_mean, ft_std 
 
 def describe (data):
 	#filter numeric columns
@@ -38,33 +32,6 @@ def describe (data):
 		for column in stats:
 			ligne += f"{stats[column][stat]:>15.6f}"
 		print(ligne)
-
-
-def ft_count(values):
-	n = 0
-	for v in values:
-		n += 1
-	return n
-
-def ft_mean(values):
-	n = ft_count(values)
-	if n == 0:
-		return float("nan")
-	total = 0
-	for v in values:
-		total += v
-	return total / n
-
-def ft_std(values):
-	n = ft_count(values)
-	if n == 0:
-		return float("nan")
-	mean = ft_mean(values)
-	total = 0 
-	#pour chaque v dans values:
-	for v in values:
-		total += (v - mean) **2
-	return (total / (n - 1)) ** 0.5
 
 def ft_min(values):
 	if ft_count(values) == 0:
@@ -100,22 +67,12 @@ data = {}
 if len(sys.argv) != 2:
 	print("Usage: python describe.py <dataset.csv>")
 	sys.exit(1)
+
 try:
-	with open(sys.argv[1], "r") as f:
-		reader = csv.DictReader(f)
-		for row in reader:
-			for column, value in row.items():
-				if column not in data:
-					data[column] = []
-				try:
-					x = float(value)
-					data[column].append(x)
-				except ValueError:
-					if value == "":
-						continue
-					data[column].append(value) #Pas sure de le garder
-	describe(data)
+	rows = load_csv(sys.argv[1])
 except FileNotFoundError:
 	print(f"File {sys.argv[1]} not found.")
 	sys.exit(1)
+data = to_columns(rows)
+describe(data)
 
