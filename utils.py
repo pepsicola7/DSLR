@@ -1,6 +1,7 @@
 import csv
 import math
 
+FEATURES = ["Astronomy", "Herbology", "Divination", "Muggle Studies", "Ancient Runes", "History of Magic", "Transfiguration", "Charms", "Flying"]
 def ft_count(values):
 	n = 0
 	for v in values:
@@ -112,3 +113,31 @@ def pair_by_house(rows, a, b):
 		points[house][0].append(x)
 		points[house][1].append(y)
 	return points
+
+def predict(x,w): #w est la liste des 10 poids
+	z = w[0]
+	for j in range(9):
+		z += w[j + 1] * x[j]
+	return sigmoid(z)
+
+def sigmoid(z):
+	if z < -500:
+		z = -500
+	if z > 500:
+		z = 500
+	p = 1 / (1 + math.exp(-z))
+	return p
+
+def student_features(row, means, stds):
+	x = []
+	for j in range(9):
+		note = row[FEATURES[j]]
+		if note is None:
+			note = means[j]
+		x.append((note - means[j]) / stds[j])
+	return x
+
+
+
+
+
