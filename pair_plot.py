@@ -1,6 +1,7 @@
 from utils import ft_count, load_csv, group_by_house, pair_by_house
 import matplotlib.pyplot as plt
 import sys
+import os
 
 if len(sys.argv) != 2:
 	print("Usage: python pair_plot.py <dataset.csv>")
@@ -32,6 +33,7 @@ def pair_plot(rows, notes):
 				ax.set_title(subjects[j][:12], fontsize=8)
 			if j == 0:
 				ax.set_ylabel(subjects[i][:12], fontsize=8)
+	os.makedirs("plots", exist_ok=True)
 	plt.savefig("plots/pair_plot.png")
 
 pair_plot(rows, notes)

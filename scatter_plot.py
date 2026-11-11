@@ -35,6 +35,7 @@ def  plot_scatter(rows, a, b):
 	plt.ylabel(b)
 	plt.title(f"Scatter plot of {a} vs {b}")
 	plt.legend()
+	os.makedirs("plots", exist_ok=True)
 	plt.savefig(f"plots/scatter_{a}_vs_{b}.png")
 	plt.clf() #Dessine dans une nouvelle table pour le prochain sujet
 
