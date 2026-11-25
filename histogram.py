@@ -1,24 +1,24 @@
-import matplotlib.pyplot as plt
-from utils import load_csv, to_columns, group_by_house
-import sys
+import argparse
 import os
 
-os.makedirs("plots", exist_ok=True)
+from utils import load_csv, to_columns, group_by_house
 
-if len(sys.argv) != 2:
-	print("Usage: python histogram.py <dataset.csv>")
-	sys.exit(1)
+parser = argparse.ArgumentParser(description="Compare course score distributions by house. Saves one plots/hist_<course>.png per course.")
+parser.add_argument("dataset", help="Path to the labeled student CSV")
+args = parser.parse_args()
 rows = {}
 data = {}
 try:
-	rows = load_csv(sys.argv[1])
+	rows = load_csv(args.dataset)
 	data = to_columns(rows)
 	notes = group_by_house(rows)
 except FileNotFoundError:
-	print(f"File {sys.argv[1]} not found.")
-	sys.exit(1)
+	parser.error(f"File {args.dataset} not found.")
 
 def plot_histogram(notes):
+	import matplotlib.pyplot as plt
+
+	os.makedirs("plots", exist_ok=True)
 	for sujet in notes:
 		for house, values in notes[sujet].items():
 			plt.hist(values, bins=10, edgecolor='black', label=house, alpha=0.5)

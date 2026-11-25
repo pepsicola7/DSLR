@@ -1,19 +1,20 @@
-from utils import ft_count, load_csv, group_by_house, pair_by_house
-import matplotlib.pyplot as plt
-import sys
+import argparse
 import os
 
-if len(sys.argv) != 2:
-	print("Usage: python pair_plot.py <dataset.csv>")
-	sys.exit(1)
+from utils import ft_count, load_csv, group_by_house, pair_by_house
+
+parser = argparse.ArgumentParser(description="Compare all course pairs and save a scatter plot matrix to plots/pair_plot.png.")
+parser.add_argument("dataset", help="Path to the labeled student CSV")
+args = parser.parse_args()
 try:
-	rows = load_csv(sys.argv[1])
+	rows = load_csv(args.dataset)
 	notes = group_by_house(rows)
 except FileNotFoundError:
-	print(f"File {sys.argv[1]} not found.")
-	sys.exit(1)
+	parser.error(f"File {args.dataset} not found.")
 
 def pair_plot(rows, notes):
+	import matplotlib.pyplot as plt
+
 	subjects = list(notes.keys())
 	n = ft_count(subjects)
 	fig, axes = plt.subplots(n, n, figsize=(40,40))

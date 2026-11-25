@@ -6,8 +6,18 @@ from utils import load_csv, predict, FEATURES, ft_mean, ft_std, student_features
 
 parser = argparse.ArgumentParser(description="Train the Hogwarts house classifier and write weights.csv.")
 parser.add_argument("dataset", help="Path to the labeled training CSV")
-parser.add_argument("--sgd", action="store_true", help="Use stochastic instead of full-batch gradient descent")
+parser.add_argument("--sgd", action="store_true", help="Use stochastic gradient descent. Cannot be combined with --mini-batch.")
+parser.add_argument("--mini-batch", action="store_true", help="Use mini-batch gradient descent. Cannot be combined with --sgd.")
+parser.add_argument("--batch-size", type=int, help="Students per mini-batch (default: 32)")
 args = parser.parse_args()
+if args.sgd and args.mini_batch:
+	parser.error("Cannot combine --sgd and --mini-batch. Choose one optimizer flag, or omit both to use full-batch gradient descent.")
+if args.batch_size is not None:
+	if not args.mini_batch:
+		parser.error("--batch-size requires --mini-batch.")
+	if args.batch_size < 1:
+		parser.error("--batch-size must be a positive integer.")
+batch_size = 32 if args.batch_size is None else args.batch_size
 try:
 	rows = load_csv(args.dataset)
 except FileNotFoundError:
@@ -64,6 +74,27 @@ def train_sgd(training_features, house_labels, initial_learning_rate, epochs, se
 				weights[weight_index] -= scaled_error * score
 	return weights
 
+def train_mini_batch(training_features, house_labels, initial_learning_rate, epochs, batch_size, seed):
+	weights = [0.0] * (len(training_features[0]) + 1)
+	student_indices = list(range(len(training_features)))
+	random_generator = random.Random(seed)
+	for epoch in range(epochs):
+		random_generator.shuffle(student_indices)
+		learning_rate = initial_learning_rate / (1 + epoch / 10)
+		for batch_start in range(0, len(student_indices), batch_size):
+			batch = student_indices[batch_start:batch_start + batch_size]
+			gradient = [0.0] * len(weights)
+			for student_index in batch:
+				student_scores = training_features[student_index]
+				prediction_error = predict(student_scores, weights) - house_labels[student_index]
+				gradient[0] += prediction_error
+				for weight_index, score in enumerate(student_scores, start=1):
+					gradient[weight_index] += prediction_error * score
+			# Average over the actual batch, including a shorter final batch.
+			for weight_index, gradient_sum in enumerate(gradient):
+				weights[weight_index] -= learning_rate * gradient_sum / len(batch)
+	return weights
+
 HOUSES = ["Gryffindor", "Hufflepuff", "Ravenclaw", "Slytherin"]
 weights = {}
 with open("weights.csv", "w", newline="") as f:
@@ -73,6 +104,9 @@ with open("weights.csv", "w", newline="") as f:
 		y = [1 if h == house else 0 for h in houses]
 		if args.sgd:
 			weights[house] = train_sgd(X, y, initial_learning_rate=0.02, epochs=100, seed=42)
+		elif args.mini_batch:
+			weights[house] = train_mini_batch(X, y, initial_learning_rate=0.2,
+				epochs=100, batch_size=batch_size, seed=42)
 		else:
 			weights[house] = train(X, y, 0.5, 1000)
 		writer.writerow([house] + weights[house])

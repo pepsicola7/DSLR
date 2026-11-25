@@ -1,4 +1,11 @@
+import argparse
 import csv
+
+parser = argparse.ArgumentParser(
+	description="Inspect datasets/dataset_train.csv from the project root and print row counts, house counts, and missing values."
+)
+parser.parse_args()
+
 n = 0
 missing_values = 0
 # course = {'Index', 'Hogwarts House', 'First Name', 'Last Name', 'Birthday', 'Best Hand', 'Arithmancy', 'Astronomy', 'Herbology', 'Defense Against the Dark Arts', 'Divination', 'Muggle Studies', 'Ancient Runes', 'History of Magic', 'Transfiguration', 'Potions', 'Care of Magical Creatures', 'Charms', 'Flying'}

@@ -1,17 +1,16 @@
-from utils import load_csv, group_by_house, ft_correlation, pair_all
-import sys
+import argparse
 import os
-import matplotlib.pyplot as plt
 
-if len(sys.argv) != 2:
-	print("Usage: python scatter_plot.py <dataset.csv>")
-	sys.exit(1)
+from utils import load_csv, group_by_house, ft_correlation, pair_all
+
+parser = argparse.ArgumentParser(description="Find the most strongly correlated course pair and save its scatter plot under plots/.")
+parser.add_argument("dataset", help="Path to the labeled student CSV")
+args = parser.parse_args()
 try:
-	rows = load_csv(sys.argv[1])
+	rows = load_csv(args.dataset)
 	notes = group_by_house(rows)
 except FileNotFoundError:
-	print(f"File {sys.argv[1]} not found.")
-	sys.exit(1)
+	parser.error(f"File {args.dataset} not found.")
 
 def pair_by_house(rows, a, b):
 	points = {}
@@ -28,6 +27,8 @@ def pair_by_house(rows, a, b):
 	return points
 
 def  plot_scatter(rows, a, b):
+	import matplotlib.pyplot as plt
+
 	points = pair_by_house(rows, a, b)
 	for house, (xs, ys) in points.items():
 		plt.scatter(xs, ys, alpha= 0.5, label=house)
