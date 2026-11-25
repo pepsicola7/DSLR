@@ -1,5 +1,6 @@
 import argparse
 import csv
+import sys
 
 from utils import load_csv, predict, student_features
 
@@ -16,18 +17,22 @@ except FileNotFoundError:
 weights = {}
 means = []
 stds = []
-with open(args.weights) as f:
-	reader = csv.reader(f)
-	next(reader)
-	for line in reader:
-		name = line[0]# "Gryffindor", "mean", "std"...
-		values = [float(v) for v in line[1:]]
-		if name == "mean":
-			means = values
-		elif name == "std":
-			stds = values
-		else:
-			weights[name] = values
+try:
+	with open(sys.argv[2]) as f:
+		reader = csv.reader(f)
+		next(reader)
+		for line in reader:
+			name = line[0]# "Gryffindor", "mean", "std"...
+			values = [float(v) for v in line[1:]]
+			if name == "mean":
+				means = values
+			elif name == "std":
+				stds = values
+			else:
+				weights[name] = values
+except FileNotFoundError:
+	print(f"File {sys.argv[2]} not found.")
+	sys.exit(1)
 
 HOUSES = ["Gryffindor", "Hufflepuff", "Ravenclaw", "Slytherin"]
 view = None
