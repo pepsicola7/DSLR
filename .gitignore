@@ -1,0 +1,10 @@
+# Python caches and local virtual environments
+__pycache__/
+*.py[cod]
+/.venv/
+/venv/
+
+# Generated project outputs
+/plots/
+/weights.csv
+/houses.csv
