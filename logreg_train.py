@@ -1,14 +1,17 @@
-import sys, csv
+import argparse
+import csv
+import random
+
 from utils import load_csv, predict, FEATURES, ft_mean, ft_std, student_features
 
-if len(sys.argv) != 2:
-	print("Usage: python logreg_train.py <dataset.csv>")
-	sys.exit(1)
+parser = argparse.ArgumentParser(description="Train the Hogwarts house classifier and write weights.csv.")
+parser.add_argument("dataset", help="Path to the labeled training CSV")
+parser.add_argument("--sgd", action="store_true", help="Use stochastic instead of full-batch gradient descent")
+args = parser.parse_args()
 try:
-	rows = load_csv(sys.argv[1])
+	rows = load_csv(args.dataset)
 except FileNotFoundError:
-	print(f"File {sys.argv[1]} not found.")
-	sys.exit(1)
+	parser.error(f"File {args.dataset} not found.")
 
 def prepare_data(rows):
 	means = []
@@ -44,6 +47,23 @@ def train(X, y, alpha, iterations):
 			w[k] -= alpha * grad[k]/m
 	return w
 
+def train_sgd(training_features, house_labels, initial_learning_rate, epochs, seed):
+	weights = [0.0] * (len(training_features[0]) + 1)
+	student_indices = list(range(len(training_features)))
+	random_generator = random.Random(seed)
+	for epoch in range(epochs):
+		random_generator.shuffle(student_indices)
+		# Take smaller steps as training progresses.
+		learning_rate = initial_learning_rate / (1 + epoch / 10)
+		for student_index in student_indices:
+			student_scores = training_features[student_index]
+			prediction_error = predict(student_scores, weights) - house_labels[student_index]
+			scaled_error = learning_rate * prediction_error
+			weights[0] -= scaled_error
+			for weight_index, score in enumerate(student_scores, start=1):
+				weights[weight_index] -= scaled_error * score
+	return weights
+
 HOUSES = ["Gryffindor", "Hufflepuff", "Ravenclaw", "Slytherin"]
 weights = {}
 with open("weights.csv", "w", newline="") as f:
@@ -51,7 +71,10 @@ with open("weights.csv", "w", newline="") as f:
 	writer.writerow(["name"] + [f"w{k}" for k in range(len(FEATURES) + 1)])
 	for house in HOUSES:
 		y = [1 if h == house else 0 for h in houses]
-		weights[house] = train(X, y, 0.5, 1000)
+		if args.sgd:
+			weights[house] = train_sgd(X, y, initial_learning_rate=0.02, epochs=100, seed=42)
+		else:
+			weights[house] = train(X, y, 0.5, 1000)
 		writer.writerow([house] + weights[house])
 	writer.writerow(["mean"] + means)
 	writer.writerow(["std"] + stds)
